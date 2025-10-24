@@ -16,6 +16,9 @@ Products API
   - PUT /api/products/{id}/
   - PATCH /api/products/{id}/
   - DELETE /api/products/{id}/
+- Total Inventory Balance:
+  - GET /api/products/total-balance/ -> {"total_balance":"<decimal>"}
+    - Note: total_balance represents a monetary/amount total; the currency unit depends on your system configuration and is not hardcoded here.
 
 Validation
 - name: required, non-blank, max 255, unique
@@ -49,6 +52,9 @@ Example curl
 
 - Delete:
   curl -s -X DELETE http://localhost:3001/api/products/1/
+
+- Total Inventory Balance:
+  curl -s http://localhost:3001/api/products/total-balance/
 
 Notes
 - No environment variables are required for basic usage; SQLite is used by default.

@@ -1,6 +1,7 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import generics, pagination
+from django.db.models import Sum, F, DecimalField, ExpressionWrapper
 from .models import Product
 from .serializers import ProductSerializer
 
@@ -56,3 +57,34 @@ class ProductRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     lookup_field = "id"
+
+
+# PUBLIC_INTERFACE
+@api_view(['GET'])
+def total_inventory_balance(request):
+    """
+    Calculate and return the total inventory balance.
+
+    This endpoint returns the sum of price * quantity across all Product records.
+    Decimal-safe arithmetic is used by leveraging a DecimalField in the aggregation.
+
+    GET /api/products/total-balance/
+    Response:
+      {
+        "total_balance": "<decimal_string>"
+      }
+
+    Note: The value is a monetary/amount total, but currency is not enforced or hardcoded.
+    """
+    # Ensure Decimal-safe arithmetic: wrap the multiplication with a DecimalField
+    total = Product.objects.aggregate(
+        total_balance=Sum(
+            ExpressionWrapper(
+                F('price') * F('quantity'),
+                output_field=DecimalField(max_digits=20, decimal_places=2),
+            )
+        )
+    )['total_balance'] or 0
+
+    # DRF JSONRenderer will serialize Decimal to string by default with JSONEncoder.
+    return Response({"total_balance": total})
